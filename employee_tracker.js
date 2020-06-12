@@ -8,13 +8,13 @@ var connection = mysql.createConnection({
 
   user: "root",
 
-  password: "rootRoot",
+  password: "",
   database: "employee_trackerDB"
 });
 
 connection.connect(function(err) {
   if (err) throw err;
-  runSearch();
+  runTracker();
 });
 
 function runTracker() {
@@ -35,7 +35,7 @@ function runTracker() {
       ]
     })
     .then(function(answer) {
-        switch (answer.action) {
+        switch (answer.options) {
         case "Add departments":
             addDepartment();
             break;
@@ -92,7 +92,10 @@ function addDepartment(){
                 }
             );
         });
+    runTracker();
 }
+
+//update dept
 
 function addRole(){
     inquirer
@@ -122,7 +125,10 @@ function addRole(){
                 }
             );
         });
+    runTracker();
 }
+
+//update roles
 
 function addEmployee(){
     inquirer
@@ -153,20 +159,93 @@ function addEmployee(){
                 }
             );
         });
+    runTracker();
 }
 
+//udpate employees
+
 function viewAll() {
+    var query = "SELECT employee.first_name, employee.last_name, employee.id, role.title, department.name";
+    query += "FROM employee INNER JOIN role ON (employee.role_id ";
+    query += "= role.id) WHERE (employee.role_id = ? AND role.id = ?) ORDER BY employee.first_name, employee.last_name, employee.id";
+    query += "FROM role INNER JOIN department ON (role.department_id ";
+    query += "= department.id) WHERE (role.department_id = ? AND department.id = ?) ORDER BY role.title";
     
+
+    connection.query(query,
+        function(err, res) {
+            if (err) throw err;
+            console.log(res);
+
+            //console.table
+        }
+    )
+
+    runTracker();
+
 }
 
 function viewByDept() {
+    var query = "SELECT employee.first_name, employee.last_name, employee.id, role.title, department.name";
+    query += "FROM department INNER JOIN role ON (department.id ";
+    query += "= role.department_id) WHERE (department.id = ? AND role.department_id = ?) ORDER BY department.name";
+    query += "FROM role INNER JOIN employee ON (role.id ";
+    query += "= employee.role_id) WHERE (role.id = ? AND employee.role_id = ?) ORDER BY role.title";
+
+    connection.query(query,
+        function(err, res) {
+            if (err) throw err;
+            console.log(res);
+
+            //console.table
+        }
+    )
+
+    runTracker();
 
 }
 
 function viewByRole() {
+    var query = "SELECT employee.first_name, employee.last_name, employee.id, role.title, department.name";
+    query += "FROM role INNER JOIN employee ON (role.id ";
+    query += "= employee.role_id) WHERE (role.id = ? AND employee.role_id = ?) ORDER BY role.title";
+    query += "FROM role INNER JOIN department ON (role.department_id ";
+    query += "= department.id) WHERE (role.department_id = ? AND department.id = ?)";
+
+    connection.query(query,
+        function(err, res) {
+            if (err) throw err;
+            console.log(res);
+
+            //console.table
+        }
+    )
+
+    runTracker();
 
 }
 
 function update(){
+    var query = "SELECT department.name, role.title, role.salary, employee.first_name, employee.last_name";
+    query += "FROM roles INNER JOIN employees ON (roles.id = employee.role_id) ORDER BY role.title";
 
+    connection.query(
+        "SELECT * FROM employee", function(err, res) {
+            if (err) throw err;
+
+            inquirer
+                .prompt([
+                    {
+                        name: "selectedEmployee",
+                        type:"rawlist",
+                        choices: function() {
+                            var choiceArray = [];
+                            for (var i=0; i< res.length; i++) {
+                                choiceArray.push(res[i].first_name)
+                            }
+                        }
+                    }
+                ])
+        }
+    )
 }
